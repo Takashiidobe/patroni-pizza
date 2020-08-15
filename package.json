@@ -1,0 +1,39 @@
+{
+	"name": "distributed-pizza",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "takashiidobe <idobetakashi@gmail.com>",
+	"license": "MIT",
+	"devDependencies": {
+		"@prisma/cli": "^2.0.0-beta.4",
+		"@types/express": "^4.17.6",
+		"@types/node": "^13.13.5",
+		"ts-node-dev": "^1.0.0-pre.44",
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"@prisma/client": "^2.0.0-beta.4",
+		"@types/ws": "^7.2.4",
+		"set-random-interval": "^1.1.0",
+		"ws": "^7.2.5"
+	},
+	"scripts": {
+		"etcd:start": "etcd --data-dir=data/etcd --enable-v2=true",
+		"haproxy:start": "haproxy -f haproxy.cfg",
+		"pg0:start": "patroni postgres0.yaml",
+		"pg1:start": "patroni postgres1.yaml",
+		"pg2:start": "patroni postgres2.yaml",
+		"db:clean": "yarn db:leader:stop && yarn db:followers:stop && rm -rf ./databases",
+		"db:leader:init": "initdb databases/leader/ && touch databases/leader/db.log && yarn db:leader:start && createdb -p 5433 takashi",
+		"db:leader:start": "pg_ctl -D databases/leader -o \"-p 5433\" -l databases/leader/db.log start",
+		"db:leader:stop": "pg_ctl -D databases/leader -o \"-p 5433\" -l databases/leader/db.log stop",
+		"db:leader:log:truncate": ": > databases/leader/db.log",
+		"db:followers:init": "initdb databases/follower_1/ && initdb databases/follower_2/ && touch databases/follower_1/db.log && touch databases/follower_2/db.log && yarn db:followers:start && createdb -p 5434 takashi && createdb -p 5435 takashi",
+		"db:followers:start": "pg_ctl -D databases/follower_1/ -o \"-p 5434\" -l databases/follower_1/db.log start && pg_ctl -D databases/follower_2/ -o \"-p 5435\" -l databases/follower_2/db.log start",
+		"db:followers:stop": "pg_ctl -D databases/follower_1/ -o \"-p 5434\" -l databases/follower_1/db.log stop && pg_ctl -D databases/follower_2/ -o \"-p 5435\" -l databases/follower_2/db.log stop",
+		"db:followers:log:truncate": ": > databases/follower_1/db.log && : > databases/follower_2/db.log",
+		"migrate": "yarn prisma migrate save --experimental && yarn prisma migrate up --experimental",
+		"watch": "ts-node-dev src/index.ts",
+		"build": "tsc --build tsconfig.json"
+	}
+}

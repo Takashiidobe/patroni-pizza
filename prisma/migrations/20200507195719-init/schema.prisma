@@ -1,0 +1,22 @@
+datasource db {
+  provider = "postgresql"
+  url = "***"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Order {
+  id          Int       @default(autoincrement()) @id
+  createdAt   DateTime  @default(now())
+  fulfilledAt DateTime?
+  item        Pizza
+}
+
+enum Pizza {
+  Pepperoni
+  Ham
+  Pineapple
+  Cheese
+}
